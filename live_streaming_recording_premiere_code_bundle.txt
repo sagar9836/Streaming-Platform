@@ -1,0 +1,8 @@
+This generated live-streaming/recording/premiere bundle has been retired.
+
+The active project is now a VOD streaming platform:
+- upload raw source videos to S3
+- process with Kafka + FFmpeg into HLS
+- serve playback through CloudFront
+
+LiveKit egress, live recording, premieres, and guest video preview limits have been removed from the active runtime.

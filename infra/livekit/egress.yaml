@@ -1,0 +1,2 @@
+# Egress has been removed from the active VOD project.
+# This file is intentionally inert and is not mounted by docker-compose.yml.
