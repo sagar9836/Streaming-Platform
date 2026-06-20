@@ -11,6 +11,7 @@ services:
         condition: service_healthy
     ports:
       - "3000:80"
+    init: true
     restart: unless-stopped
     networks:
       - video_platform_net
@@ -20,18 +21,33 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: video-platform-api
-    env_file:
-      - .env
     environment:
+      APP_NAME: ${APP_NAME:-VideoStreamingBackend}
+      DEBUG: ${DEBUG:-false}
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/video_platform
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       REDIS_URL: redis://redis:6379/0
       STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
       LOCAL_MEDIA_ROOT: /app/media
       MEDIA_BASE_URL: ${MEDIA_BASE_URL:-http://localhost:8000/media}
-      LIVEKIT_URL: ws://livekit:7880
-      LIVEKIT_PUBLIC_URL: ${LIVEKIT_PUBLIC_URL:-ws://localhost:7880}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+      AWS_REGION: ${AWS_REGION:-ap-south-1}
+      S3_BUCKET: ${S3_BUCKET:-}
+      CLOUDFRONT_DOMAIN: ${CLOUDFRONT_DOMAIN:-}
+      CLOUDFRONT_KEY_PAIR_ID: ${CLOUDFRONT_KEY_PAIR_ID:-}
+      CLOUDFRONT_PRIVATE_KEY_PATH: ${CLOUDFRONT_PRIVATE_KEY_PATH:-}
+      MAIL_SERVER: ${MAIL_SERVER:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@videoplatform.local}
+      MAIL_STARTTLS: ${MAIL_STARTTLS:-true}
     volumes:
       - ./backend/media:/app/media
     depends_on:
@@ -40,7 +56,7 @@ services:
       kafka:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     ports:
       - "8000:8000"
     healthcheck:
@@ -49,6 +65,7 @@ services:
       timeout: 20s
       retries: 5
       start_period: 40s
+    init: true
     restart: unless-stopped
     networks:
       - video_platform_net
@@ -58,8 +75,6 @@ services:
       context: ./backend/ffmpeg_service
       dockerfile: Dockerfile
     container_name: video-platform-ffmpeg
-    env_file:
-      - .env
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/video_platform
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
@@ -69,6 +84,11 @@ services:
       REDIS_URL: redis://redis:6379/0
       STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
       LOCAL_MEDIA_ROOT: /worker/media
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+      AWS_REGION: ${AWS_REGION:-ap-south-1}
+      S3_BUCKET: ${S3_BUCKET:-}
     volumes:
       - ./backend/media:/worker/media
       - recordings:/tmp
@@ -78,7 +98,8 @@ services:
       kafka:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
+    init: true
     restart: unless-stopped
     networks:
       - video_platform_net
@@ -106,19 +127,9 @@ services:
   redis:
     image: redis:7
     container_name: video-platform-redis
-    restart: unless-stopped
-    networks:
-      - video_platform_net
-
-  # ---------------- ZOOKEEPER ----------------
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
-    container_name: video-platform-zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
     healthcheck:
-      test: ["CMD", "bash", "-c", "echo ruok | nc localhost 2181"]
-      interval: 10s
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
       timeout: 5s
       retries: 10
     restart: unless-stopped
@@ -129,27 +140,24 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: video-platform-kafka
-    depends_on:
-      zookeeper:
-        condition: service_healthy
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-
-      # ✅ stable listener config
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
     healthcheck:
-      test: ["CMD-SHELL", "cub kafka-ready -b localhost:29092 1 30"]
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:29092 >/dev/null 2>&1"]
       interval: 15s
       timeout: 60s
       retries: 10
