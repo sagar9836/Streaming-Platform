@@ -111,7 +111,6 @@ def transcode_to_hls(input_path, output_dir, video_id):
         "-map", "0:v:0",
         "-map", "0:a:0?",
         "-c:v", "libx264",
-<<<<<<< HEAD
         "-preset", "medium",
         "-crf", "23",
         "-pix_fmt", "yuv420p",
@@ -125,21 +124,12 @@ def transcode_to_hls(input_path, output_dir, video_id):
         "-ar", "48000",
         "-ac", "2",
         "-force_key_frames", f"expr:gte(t,n_forced*{segment_time})",
-=======
-        "-profile:v", "main",
-        "-pix_fmt", "yuv420p",
-        "-c:a", "aac",
-        "-b:a", "128k",
->>>>>>> 62da14e
         "-f", "hls",
         "-hls_time", str(segment_time),
         "-hls_playlist_type", "vod",
         "-hls_flags", "independent_segments",
-<<<<<<< HEAD
         "-hls_list_size", "0",
         "-start_number", "0",
-=======
->>>>>>> 62da14e
         "-hls_segment_filename", f"{output_dir}/{video_id}_segment_%03d.ts",
         f"{output_dir}/master.m3u8",
     ]

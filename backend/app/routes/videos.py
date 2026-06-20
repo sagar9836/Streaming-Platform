@@ -4,6 +4,7 @@ import asyncio
 import uuid
 import logging
 
+from botocore.exceptions import ClientError
 from botocore.client import Config
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from sqlalchemy import select
@@ -215,21 +216,12 @@ async def upload_direct(
     try:
         await file.seek(0)
         await asyncio.to_thread(_upload_file, file, video.s3_key)
-<<<<<<< HEAD
-    except Exception:
-        logger.exception(
-            "Storage upload failed for bucket=%s key=%s video_id=%s",
-            settings.s3_bucket,
-            video.s3_key,
-            video.id,
-=======
     except ClientError as exc:
         logger.exception(
             "S3 direct upload failed | video_id=%s key=%s code=%s",
             video.id,
             video.s3_key,
             _client_error_code(exc),
->>>>>>> 62da14e
         )
         video.status = VideoStatus.FAILED
         await db.commit()
@@ -298,22 +290,11 @@ async def complete_upload(
         return {"message": "Already processing"}
 
     try:
-<<<<<<< HEAD
         await asyncio.to_thread(_check_storage, video.s3_key)
-    except Exception:
-        logger.exception(
-            "Storage object verification failed for bucket=%s key=%s video_id=%s",
-            settings.s3_bucket,
-            video.s3_key,
-            video.id,
-        )
-        raise HTTPException(400, "File not uploaded")
-=======
-        await asyncio.to_thread(_check_s3, video.s3_key)
     except ClientError as exc:
         code = _client_error_code(exc)
         logger.exception(
-            "S3 upload verification failed | video_id=%s key=%s code=%s",
+            "Storage upload verification failed | video_id=%s key=%s code=%s",
             video.id,
             video.s3_key,
             code,
@@ -323,15 +304,14 @@ async def complete_upload(
                 502,
                 "S3 access denied while verifying upload. Check AWS credentials and IAM policy.",
             ) from exc
-        raise HTTPException(400, "File not uploaded to S3") from exc
+        raise HTTPException(400, "File not uploaded") from exc
     except Exception as exc:
         logger.exception(
-            "S3 upload verification failed | video_id=%s key=%s",
+            "Storage upload verification failed | video_id=%s key=%s",
             video.id,
             video.s3_key,
         )
-        raise HTTPException(400, "File not uploaded to S3") from exc
->>>>>>> 62da14e
+        raise HTTPException(400, "File not uploaded") from exc
 
     video.status = VideoStatus.PROCESSING
     await db.commit()

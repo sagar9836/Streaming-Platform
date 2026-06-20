@@ -26,23 +26,13 @@ def _get_s3_client():
 
 
 def build_video_play_url(video_id: int) -> str | None:
-<<<<<<< HEAD
     return build_public_asset_url(f"videos/hls/{video_id}/master.m3u8")
-=======
-    if not settings.cloudfront_domain:
-        return None
-    return f"https://{settings.cloudfront_domain}/videos/hls/{video_id}/master.m3u8?v={video_id}"
->>>>>>> 62da14e
 
 
 def build_video_thumbnail_url(video: Video) -> str | None:
     if not video.thumbnail_key:
         return None
-<<<<<<< HEAD
     return build_public_asset_url(video.thumbnail_key)
-=======
-    return f"https://{settings.cloudfront_domain}/{video.thumbnail_key}?v={video.id}"
->>>>>>> 62da14e
 
 
 def build_thumbnail_s3_key(video_id: int) -> str:

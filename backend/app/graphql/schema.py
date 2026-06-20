@@ -284,7 +284,7 @@ class Query:
                         Bucket=settings.s3_bucket,
                         Key=hls_path,
                     )
-<<<<<<< HEAD
+
                     asset_available = True
                     playback_url = build_public_asset_url(hls_path)
                 except Exception:
@@ -306,13 +306,7 @@ class Query:
                         else None
                     ),
                 )
-=======
-                    playback = VideoPlayback(
-                        hls_url=build_video_play_url(video.id),
-                    )
-                except ClientError:
-                    playback = None
->>>>>>> 62da14e
+
 
             return VideoPageData(
                 id=video.id,

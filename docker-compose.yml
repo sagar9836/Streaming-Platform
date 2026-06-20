@@ -24,14 +24,11 @@ services:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/video_platform
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       REDIS_URL: redis://redis:6379/0
-<<<<<<< HEAD
       STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
       LOCAL_MEDIA_ROOT: /app/media
       MEDIA_BASE_URL: ${MEDIA_BASE_URL:-http://localhost:8000/media}
       LIVEKIT_URL: ws://livekit:7880
       LIVEKIT_PUBLIC_URL: ${LIVEKIT_PUBLIC_URL:-ws://localhost:7880}
-=======
->>>>>>> 62da14e
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
     volumes:
       - ./backend/media:/app/media
@@ -67,14 +64,11 @@ services:
       KAFKA_SESSION_TIMEOUT_MS: ${KAFKA_SESSION_TIMEOUT_MS:-45000}
       KAFKA_HEARTBEAT_INTERVAL_MS: ${KAFKA_HEARTBEAT_INTERVAL_MS:-15000}
       REDIS_URL: redis://redis:6379/0
-<<<<<<< HEAD
       STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
       LOCAL_MEDIA_ROOT: /worker/media
     volumes:
       - ./backend/media:/worker/media
-      - recordings:/tmp   # 🔥 shared with egress
-=======
->>>>>>> 62da14e
+      - recordings:/tmp
     depends_on:
       kafka:
         condition: service_healthy
@@ -166,3 +160,4 @@ networks:
 # ---------------- VOLUMES ----------------
 volumes:
   pg_data:
+  recordings:
