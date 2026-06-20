@@ -1,10 +1,25 @@
-FROM python:3.11-slim
+ARG PYTHON_BASE_IMAGE=python:3.11-slim
+FROM ${PYTHON_BASE_IMAGE}
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Build with the backend directory as context:
+# docker build -f backend/app/Dockerfile backend
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends build-essential && \
+    rm -rf /var/lib/apt/lists/*
 
-COPY . .
+COPY requirements.txt .
+RUN pip install -r requirements.txt && \
+    python -c "import multipart; print('python-multipart ok')"
+
+COPY app ./app
+RUN mkdir -p /app/media /app/keys
+
+EXPOSE 8000
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
