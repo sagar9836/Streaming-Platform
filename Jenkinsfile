@@ -19,7 +19,6 @@ pipeline {
                 java -version
                 docker --version
                 trivy --version
-                ${scannerHome}/bin/sonar-scanner --version
                 '''
             }
         }
