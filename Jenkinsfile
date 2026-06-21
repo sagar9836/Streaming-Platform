@@ -1,16 +1,6 @@
 pipeline {
-    agent {
-        docker { 
-            image 'eclipse-temurin:17-jdk' 
-        }
-    }
-    stages {
-        stage('Verify Java') {
-            steps {
-                // This command will run inside the Java 17 container
-                sh 'java -version' 
-            }
-        }
+    agent any
+
     environment {
         DOCKER_IMAGE = "9836sagar9836/video-platform-api"
         SONAR_TOKEN = credentials('sonar-token')
@@ -18,9 +8,20 @@ pipeline {
 
     stages {
 
+        stage('Verify Tools') {
+            steps {
+                sh '''
+                java -version
+                docker --version
+                trivy --version
+                '''
+            }
+        }
+
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/sagar9836/Streaming-Platform.git'
+                git branch: 'main',
+                url: 'https://github.com/sagar9836/Streaming-Platform.git'
             }
         }
 
@@ -41,7 +42,10 @@ pipeline {
         stage('Trivy File Scan') {
             steps {
                 sh '''
-                trivy fs . > trivy-fs-report.txt
+                trivy fs . \
+                --severity HIGH,CRITICAL \
+                --format table \
+                --exit-code 1
                 '''
             }
         }
@@ -57,18 +61,23 @@ pipeline {
         stage('Trivy Image Scan') {
             steps {
                 sh '''
-                trivy image $DOCKER_IMAGE:${BUILD_NUMBER} > trivy-image-report.txt
+                trivy image $DOCKER_IMAGE:${BUILD_NUMBER} \
+                --severity HIGH,CRITICAL \
+                --format table \
+                --exit-code 1
                 '''
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-creds',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-creds',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
                     sh '''
                     echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
                     docker push $DOCKER_IMAGE:${BUILD_NUMBER}
@@ -84,6 +93,16 @@ pipeline {
                 docker compose up -d --build
                 '''
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully.'
+        }
+
+        failure {
+            echo 'Pipeline failed.'
         }
     }
 }
