@@ -4,7 +4,6 @@ pipeline {
     tools {
         jdk 'jdk17'
     }
-
     environment {
         DOCKER_IMAGE = "9836sagar9836/video-platform-api"
         SONAR_TOKEN = credentials('sonar-token')
