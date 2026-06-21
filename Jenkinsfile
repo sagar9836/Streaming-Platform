@@ -1,9 +1,18 @@
 pipeline {
     agent any
 
+    tools {
+        sonarQubeScanner 'sonar-scanner'
+    }
+
+    options {
+        skipDefaultCheckout(true)
+    }
+
     environment {
         DOCKER_IMAGE = "9836sagar9836/video-platform-api"
         SONAR_TOKEN = credentials('sonar-token')
+        TRIVY_REPORT_DIR = "trivy-reports"
     }
 
     stages {
@@ -11,9 +20,11 @@ pipeline {
         stage('Verify Tools') {
             steps {
                 sh '''
+                echo "Verifying tools..."
                 java -version
                 docker --version
                 trivy --version
+                sonar-scanner --version
                 '''
             }
         }
@@ -25,15 +36,26 @@ pipeline {
             }
         }
 
+        stage('Prepare Trivy Reports') {
+            steps {
+                sh '''
+                mkdir -p ${TRIVY_REPORT_DIR}
+
+                touch ${TRIVY_REPORT_DIR}/trivy-fs-report.txt
+                touch ${TRIVY_REPORT_DIR}/trivy-image-report.txt
+                '''
+            }
+        }
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonarqube') {
                     sh '''
                     sonar-scanner \
-                    -Dsonar.projectKey=video-platform \
-                    -Dsonar.sources=. \
-                    -Dsonar.host.url=http://13.232.118.249:9000 \
-                    -Dsonar.login=$SONAR_TOKEN
+                      -Dsonar.projectKey=video-platform \
+                      -Dsonar.sources=. \
+                      -Dsonar.host.url=$SONAR_HOST_URL \
+                      -Dsonar.login=$SONAR_TOKEN
                     '''
                 }
             }
@@ -43,9 +65,10 @@ pipeline {
             steps {
                 sh '''
                 trivy fs . \
-                --severity HIGH,CRITICAL \
-                --format table \
-                --exit-code 1
+                  --severity HIGH,CRITICAL \
+                  --format table \
+                  --output ${TRIVY_REPORT_DIR}/trivy-fs-report.txt \
+                  --exit-code 1
                 '''
             }
         }
@@ -53,7 +76,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                docker build -t $DOCKER_IMAGE:${BUILD_NUMBER} ./backend
+                docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} ./backend
+                docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest
                 '''
             }
         }
@@ -61,10 +85,11 @@ pipeline {
         stage('Trivy Image Scan') {
             steps {
                 sh '''
-                trivy image $DOCKER_IMAGE:${BUILD_NUMBER} \
-                --severity HIGH,CRITICAL \
-                --format table \
-                --exit-code 1
+                trivy image ${DOCKER_IMAGE}:${BUILD_NUMBER} \
+                  --severity HIGH,CRITICAL \
+                  --format table \
+                  --output ${TRIVY_REPORT_DIR}/trivy-image-report.txt \
+                  --exit-code 1
                 '''
             }
         }
@@ -80,7 +105,9 @@ pipeline {
                 ]) {
                     sh '''
                     echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                    docker push $DOCKER_IMAGE:${BUILD_NUMBER}
+
+                    docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                    docker push ${DOCKER_IMAGE}:latest
                     '''
                 }
             }
@@ -97,6 +124,10 @@ pipeline {
     }
 
     post {
+        always {
+            archiveArtifacts artifacts: 'trivy-reports/*.txt', allowEmptyArchive: true
+        }
+
         success {
             echo 'Pipeline completed successfully.'
         }
