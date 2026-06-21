@@ -3,8 +3,8 @@ pipeline {
 
  
     environment {
-        SONAR_PROJECT_KEY = 'video-platform '
-        SONAR_HOST_URL    = 'http://13.232.118.249:9000/'
+        SONAR_PROJECT_KEY = 'video-platform'
+        SONAR_HOST_URL    = 'http://13.232.118.249:9000'
         DOCKER_IMAGE = "9836sagar9836/video-platform-api"
         SONAR_TOKEN = credentials('sonar-token')
         TRIVY_REPORT_DIR = "trivy-reports"
@@ -18,7 +18,7 @@ pipeline {
                 java -version
                 docker --version
                 trivy --version
-                sonar-scanner --version
+                ${scannerHome}/bin/sonar-scanner --version
                 '''
             }
         }
