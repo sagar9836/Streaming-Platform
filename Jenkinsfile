@@ -1,9 +1,16 @@
 pipeline {
-    agent any
-
-    tools {
-        jdk 'jdk17'
+    agent {
+        docker { 
+            image 'eclipse-temurin:17-jdk' 
+        }
     }
+    stages {
+        stage('Verify Java') {
+            steps {
+                // This command will run inside the Java 17 container
+                sh 'java -version' 
+            }
+        }
     environment {
         DOCKER_IMAGE = "9836sagar9836/video-platform-api"
         SONAR_TOKEN = credentials('sonar-token')
