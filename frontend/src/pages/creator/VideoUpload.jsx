@@ -17,7 +17,6 @@ import {
   CardContent,
   Chip,
   CircularProgress,
-  Divider,
   LinearProgress,
   Stack,
   TextField,
@@ -151,7 +150,7 @@ export default function VideoUpload() {
             setUploadPercent(percent);
           },
         });
-      } catch (err) {
+      } catch {
         // 🔥 FALLBACK: backend upload
         const formData = new FormData();
         formData.append("title", title);

@@ -112,7 +112,7 @@ export default function LiveStreamPlayer({
         hls.destroy();
       }
     };
-  }, [src, muted]);
+  }, [src, muted, initialOffsetSeconds]);
 
   return (
     <Box>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Hls from "hls.js";
 
@@ -142,7 +142,7 @@ export default function VideoPlayer() {
     };
   }, [videoUrl]);
 
-  const loadVideoPage = async () => {
+  const loadVideoPage = useCallback(async () => {
     const data = await fetchVideoPageGraphql(videoId);
 
     setVideoUrl(data?.playback?.hlsUrl || null);
@@ -159,7 +159,7 @@ export default function VideoPlayer() {
       liked: data?.stats?.liked ?? false,
     });
     setSubscribed(Boolean(data?.isSubscribed));
-  };
+  }, [videoId]);
 
   useEffect(() => {
     const load = async () => {
@@ -174,7 +174,7 @@ export default function VideoPlayer() {
     };
 
     load();
-  }, [videoId, user]);
+  }, [videoId, user, loadVideoPage]);
 
   const handlePlay = () => {
     watchStartRef.current = Date.now();

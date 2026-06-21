@@ -31,7 +31,7 @@ export function AuthProvider({ children }) {
     const init = async () => {
       try {
         await refreshUser();
-      } catch (err) {
+      } catch {
         console.warn("Auth init failed, clearing token");
         localStorage.removeItem("token");
         setUser(null);

@@ -36,7 +36,7 @@ export default function ChannelPage() {
         setChannel(data.channel);
         setVideos(data.videos);
         setIsSubscribed(Boolean(data.isSubscribed));
-      } catch (err) {
+      } catch {
         if (!mounted) {
           return;
         }

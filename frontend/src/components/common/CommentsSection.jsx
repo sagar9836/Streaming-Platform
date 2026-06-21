@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -22,19 +22,19 @@ function CommentsSection({ videoId }) {
   /* =========================
      LOAD COMMENTS
      ========================= */
-  useEffect(() => {
-    if (!videoId) return;
-    loadComments();
-  }, [videoId]);
-
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
     try {
       const data = await fetchComments(videoId);
       setComments(data);
     } catch {
       console.error("Failed to load comments");
     }
-  };
+  }, [videoId]);
+
+  useEffect(() => {
+    if (!videoId) return;
+    loadComments();
+  }, [videoId, loadComments]);
 
   /* =========================
      ADD COMMENT

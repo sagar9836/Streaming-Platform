@@ -24,13 +24,13 @@ services:
     environment:
       APP_NAME: ${APP_NAME:-VideoStreamingBackend}
       DEBUG: ${DEBUG:-false}
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/video_platform
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
       JWT_SECRET: ${JWT_SECRET:-dev-secret-key}
       JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       REDIS_URL: redis://redis:6379/0
-      STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-s3}
       LOCAL_MEDIA_ROOT: /app/media
       MEDIA_BASE_URL: ${MEDIA_BASE_URL:-http://localhost:8000/media}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
@@ -51,8 +51,6 @@ services:
     volumes:
       - ./backend/media:/app/media
     depends_on:
-      postgres:
-        condition: service_healthy
       kafka:
         condition: service_healthy
       redis:
@@ -76,13 +74,13 @@ services:
       dockerfile: Dockerfile
     container_name: video-platform-ffmpeg
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/video_platform
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       KAFKA_MAX_POLL_INTERVAL_MS: ${KAFKA_MAX_POLL_INTERVAL_MS:-3600000}
       KAFKA_SESSION_TIMEOUT_MS: ${KAFKA_SESSION_TIMEOUT_MS:-45000}
       KAFKA_HEARTBEAT_INTERVAL_MS: ${KAFKA_HEARTBEAT_INTERVAL_MS:-15000}
       REDIS_URL: redis://redis:6379/0
-      STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-s3}
       LOCAL_MEDIA_ROOT: /worker/media
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
@@ -93,8 +91,6 @@ services:
       - ./backend/media:/worker/media
       - recordings:/tmp
     depends_on:
-      postgres:
-        condition: service_healthy
       kafka:
         condition: service_healthy
       redis:
@@ -104,26 +100,6 @@ services:
     networks:
       - video_platform_net
 
-  # ---------------- DATABASE ----------------
-  postgres:
-    image: postgres:15
-    container_name: video-platform-postgres
-    environment:
-      POSTGRES_DB: video_platform
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - pg_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d video_platform"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    restart: unless-stopped
-    networks:
-      - video_platform_net
-
-  # ---------------- REDIS ----------------
   redis:
     image: redis:7
     container_name: video-platform-redis
@@ -136,7 +112,6 @@ services:
     networks:
       - video_platform_net
 
-  # ---------------- KAFKA ----------------
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: video-platform-kafka
@@ -155,24 +130,23 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    volumes:
+      - kafka_data:/var/lib/kafka/data
     healthcheck:
       test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:29092 >/dev/null 2>&1"]
       interval: 15s
       timeout: 60s
       retries: 10
       start_period: 60s
-
     restart: unless-stopped
     networks:
       - video_platform_net
 
-# ---------------- NETWORK ----------------
 networks:
   video_platform_net:
     driver: bridge
 
-# ---------------- VOLUMES ----------------
 volumes:
-  pg_data:
   recordings:
+  kafka_data:

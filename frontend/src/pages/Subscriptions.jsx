@@ -40,7 +40,7 @@ export default function SubscriptionsPage() {
         setChannels(Array.isArray(channelData) ? channelData : []);
         setNotifications(notificationData?.notifications || []);
         setError("");
-      } catch (err) {
+      } catch {
         if (!mounted) return;
         setError("Unable to load your subscribed channels right now.");
       } finally {
