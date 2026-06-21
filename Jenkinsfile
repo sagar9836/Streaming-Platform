@@ -1,9 +1,6 @@
 pipeline {
     agent any
 
-    options {
-        skipDefaultCheckout(true)
-    }
 
     environment {
         DOCKER_IMAGE = "9836sagar9836/video-platform-api"
