@@ -1,11 +1,10 @@
 pipeline {
     agent any
 
-    tools {
-        sonar-runner 'sonar-scanner'
-    }
-
+ 
     environment {
+        SONAR_PROJECT_KEY = 'video-platform '
+        SONAR_HOST_URL    = 'http://13.232.118.249:9000/'
         DOCKER_IMAGE = "9836sagar9836/video-platform-api"
         SONAR_TOKEN = credentials('sonar-token')
         TRIVY_REPORT_DIR = "trivy-reports"
@@ -32,19 +31,25 @@ pipeline {
             }
         }
 
+
         stage('SonarQube Analysis') {
             steps {
+                echo 'Running SonarQube code analysis...'
                 withSonarQubeEnv('sonarqube') {
-                    sh '''
-                    sonar-scanner \
-                    -Dsonar.projectKey=video-platform \
-                    -Dsonar.sources=. \
-                    -Dsonar.host.url=$SONAR_HOST_URL \
-                    -Dsonar.login=$SONAR_TOKEN
-                    '''
+                    script {
+                        def scannerHome = tool 'sonar-scanner'
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                              -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                              -Dsonar.sources=. \
+                              -Dsonar.host.url=${SONAR_HOST_URL} \
+                              -Dsonar.token=${SONAR_TOKEN}
+                        """
+                    }
                 }
             }
         }
+
 
         stage('Trivy File Scan') {
             steps {
