@@ -9,6 +9,7 @@ pipeline {
         SONAR_TOKEN = credentials('sonar-token')
         TRIVY_REPORT_DIR = "trivy-reports"
     }
+    
 
     stages {
 
