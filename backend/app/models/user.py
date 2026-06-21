@@ -22,7 +22,7 @@ class User(Base):
     hashed_password: Mapped[str]
     
     role: Mapped[UserRole] = mapped_column(
-        Enum(UserRole),
+        Enum(UserRole, native_enum=False),
         default=UserRole.USER   # 👈 REGISTER KE TIME YEHI HOTA HAI
     )
 

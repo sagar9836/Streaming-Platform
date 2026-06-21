@@ -35,7 +35,7 @@ class CreatorRequest(Base):
 
     # 🔄 Request status
     status: Mapped[CreatorRequestStatus] = mapped_column(
-        Enum(CreatorRequestStatus),
+        Enum(CreatorRequestStatus, native_enum=False),
         default=CreatorRequestStatus.PENDING,
         index=True,
         nullable=False,

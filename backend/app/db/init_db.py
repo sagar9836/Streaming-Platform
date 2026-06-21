@@ -1,5 +1,7 @@
 import asyncio
+import logging
 from sqlalchemy import select, text
+from sqlalchemy.exc import ProgrammingError
 
 from app.db.session import AsyncSessionLocal, get_engine
 from app.db.base import Base
@@ -14,6 +16,7 @@ from app.core.security import hash_password
 # ----------------------------
 ADMIN_EMAIL = "admin@platform.com"
 ADMIN_PASSWORD = "admin123"
+logger = logging.getLogger("db-init")
 
 
 async def create_tables():
@@ -102,7 +105,16 @@ async def create_bootstrap_admin():
 
 
 async def init_db():
-    await create_tables()
+    try:
+        await create_tables()
+    except ProgrammingError as exc:
+        if "permission denied for schema public" in str(exc).lower():
+            logger.error(
+                "Database user cannot create objects in schema public. "
+                "Grant CREATE/USAGE on schema public or run migrations with an owner role."
+            )
+        raise
+
     await create_bootstrap_admin()
 
 

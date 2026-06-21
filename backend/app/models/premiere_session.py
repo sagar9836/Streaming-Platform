@@ -28,7 +28,7 @@ class PremiereSession(Base):
     description: Mapped[str] = mapped_column(String(2000), default="")
     scheduled_start_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     status: Mapped[PremiereSessionStatus] = mapped_column(
-        Enum(PremiereSessionStatus),
+        Enum(PremiereSessionStatus, native_enum=False),
         default=PremiereSessionStatus.SCHEDULED,
         index=True,
     )
