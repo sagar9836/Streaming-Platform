@@ -83,6 +83,7 @@ pipeline {
             steps {
                 sh '''
                 docker compose pull api 
+                docker compose stop api && docker compose rm -f api
                 docker compose up -d --no-deps --force-recreate api 
                 '''
             }
