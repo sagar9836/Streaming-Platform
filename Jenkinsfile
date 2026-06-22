@@ -1,15 +1,10 @@
 pipeline {
     agent any
 
- 
     environment {
-        SONAR_PROJECT_KEY = 'video-platform'
-        SONAR_HOST_URL    = 'http://13.232.118.249:9000'
         DOCKER_IMAGE = "9836sagar9836/video-platform-api"
-        SONAR_TOKEN = credentials('sonar-token')
         TRIVY_REPORT_DIR = "trivy-reports"
     }
-    
 
     stages {
 
@@ -23,7 +18,7 @@ pipeline {
             }
         }
 
-        stage('Prepare Trivy Reports') {
+        stage('Prepare Reports') {
             steps {
                 sh '''
                 mkdir -p ${TRIVY_REPORT_DIR}
@@ -31,27 +26,7 @@ pipeline {
             }
         }
 
-
-        stage('SonarQube Analysis') {
-            steps {
-                echo 'Running SonarQube code analysis...'
-                withSonarQubeEnv('sonarqube') {
-                    script {
-                        def scannerHome = tool 'sonar-scanner'
-                        sh """
-                            ${scannerHome}/bin/sonar-scanner \
-                              -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                              -Dsonar.sources=. \
-                              -Dsonar.host.url=${SONAR_HOST_URL} \
-                              -Dsonar.token=${SONAR_TOKEN}
-                        """
-                    }
-                }
-            }
-        }
-
-
-        stage('Trivy File Scan') {
+        stage('Trivy File System Scan') {
             steps {
                 sh '''
                 trivy fs . \
@@ -105,8 +80,8 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh '''
-                docker compose down
-                docker compose up -d --build
+                docker compose pull
+                docker compose up -d
                 '''
             }
         }
