@@ -17,9 +17,7 @@ services:
       - video_platform_net
 
   api:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: 9836sagar9836/streaming-platform-api:latest
     container_name: video-platform-api
     environment:
       APP_NAME: ${APP_NAME:-VideoStreamingBackend}
