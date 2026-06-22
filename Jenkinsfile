@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "9836sagar9836/video-platform-api"
+        DOCKER_IMAGE = "9836sagar9836/streaming-platform-api"
         TRIVY_REPORT_DIR = "trivy-reports"
     }
 
