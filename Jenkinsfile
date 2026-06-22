@@ -4,6 +4,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = "9836sagar9836/streaming-platform-api"
         TRIVY_REPORT_DIR = "trivy-reports"
+        DATABASE_URL = credentials('DATABASE_URL')
     }
 
     stages {
