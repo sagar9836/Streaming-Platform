@@ -82,6 +82,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh '''
+                cd /home/ubuntu/projects/Streaming-Platform
                 docker compose pull api 
                 docker compose stop api && docker compose rm -f api
                 docker compose up -d --no-deps --force-recreate api 
