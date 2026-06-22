@@ -82,8 +82,9 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh '''
-                docker compose pull
-                docker compose up -d
+                docker compose pull api 
+                docker compose up -d --no-deps api 
+
                 '''
             }
         }
