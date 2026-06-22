@@ -39,13 +39,14 @@ pipeline {
         }
 
         stage('Build Docker Image') {
-            steps {
+           steps {
                 sh '''
+                export DOCKER_BUILDKIT=1
                 docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} ./backend
                 docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest
                 '''
             }
-        }
+        } 
 
         stage('Trivy Image Scan') {
             steps {
