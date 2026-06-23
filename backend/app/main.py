@@ -3,6 +3,7 @@ import logging
 import mimetypes
 
 from fastapi import FastAPI
+from prometheus_fastapi_instrumentator import Instrumentator
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from strawberry.fastapi import GraphQLRouter
@@ -50,6 +51,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+Instrumentator(
+    should_group_status_codes=True,
+    should_ignore_untemplated=True,
+    should_respect_env_var=True,
+).instrument(app).expose(app)
 
 if uses_local_storage():
     app.mount("/media", StaticFiles(directory=get_local_media_root()), name="media")
