@@ -1,0 +1,16 @@
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'sagarpaal116@gmail.com'
+  smtp_auth_username: 'sagarpaal116@gmail.com'
+  smtp_auth_password: 'yymu yesd nkhf tejw'
+  smtp_require_tls: true
+
+route:
+  receiver: "email-alert"
+
+receivers:
+  - name: "email-alert"
+    email_configs:
+      - to: "sagarpaal116@gmail.com"
+        send_resolved: true
